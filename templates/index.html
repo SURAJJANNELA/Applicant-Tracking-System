@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applicant Tracking System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        h1 {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin: 0;
+            font-size: 2rem;
+        }
+        .container {
+            width: 80%;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        input[type="file"], textarea, input[type="number"], button {
+            margin-top: 8px;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        input[type="file"] {
+            border: 1px solid #007bff;
+        }
+        textarea {
+            border: 1px solid #007bff;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .result-list {
+            list-style: none;
+            padding: 0;
+        }
+        .result-list li {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px 0;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Applicant Tracking System</h1>
+    <div class="container">
+        <form id="uploadForm" action="/compare" method="POST" enctype="multipart/form-data">
+            <label for="resumes">Choose your resume files (PDF only):</label>
+            <input type="file" id="resumes" name="resumes[]" accept=".pdf" multiple required webkitdirectory>
+
+            <label for="jobDesc">Enter the job description:</label>
+            <textarea id="jobDesc" name="jobDesc" rows="6" style="width:100%;" required></textarea>
+
+            <label for="numShortlist">Number of resumes to shortlist:</label>
+            <input type="number" id="numShortlist" name="numShortlist" min="1" required>
+
+            <button type="submit">Compare!</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').onsubmit = function(event) {
+            event.preventDefault();
+
+            var formData = new FormData();
+            var fileInput = document.getElementById('resumes');
+            var files = fileInput.files;
+
+            for (var i = 0; i < files.length; i++) {
+                formData.append('resumes[]', files[i]);
+            }
+
+            var jobDesc = document.getElementById('jobDesc').value;
+            var numShortlist = document.getElementById('numShortlist').value;
+            formData.append('jobDesc', jobDesc);
+            formData.append('numShortlist', numShortlist);
+
+            fetch('/compare', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('result').innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    let resultHTML = '<h3>Ranked Results</h3><ul class="result-list">';
+                    data.scores.forEach(item => {
+                        resultHTML += `<li>${item.filename}: ${item.score.toFixed(4)}</li>`;
+                    });
+                    resultHTML += '</ul>';
+                    document.getElementById('result').innerHTML = resultHTML;
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `<p class="error">Error processing your request.</p>`;
+                console.error('Error:', error);
+            });
+        };
+    </script>
+</body>
+</html>

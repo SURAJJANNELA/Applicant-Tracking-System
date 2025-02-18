@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applicant Tracking System</title>
+</head>
+<body>
+    <h1>Applicant Tracking System</h1>
+
+    <!-- Form for directory upload and job description input -->
+    <form id="uploadForm" action="/compare" method="POST" enctype="multipart/form-data">
+        <div>
+            <label for="resumes">Choose your resume files (PDF only):</label>
+            <!-- Using directory input with JavaScript to handle multiple files -->
+            <input type="file" id="resumes" name="resumes[]" accept=".pdf" multiple required webkitdirectory>
+        </div>
+
+        <div>
+            <label for="jobDesc">Enter the job description:</label>
+            <textarea id="jobDesc" name="jobDesc" rows="6" style="width:100%;" required></textarea>
+        </div>
+
+        <div>
+            <label for="numShortlist">Number of resumes to shortlist:</label>
+            <input type="number" id="numShortlist" name="numShortlist" min="1" required>
+        </div>
+
+        <button type="submit">Compare!</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('uploadForm').onsubmit = function(event) {
+            event.preventDefault();
+
+            var formData = new FormData();
+            var fileInput = document.getElementById('resumes');
+            var files = fileInput.files;
+
+            for (var i = 0; i < files.length; i++) {
+                formData.append('resumes[]', files[i]);
+            }
+
+            var jobDesc = document.getElementById('jobDesc').value;
+            var numShortlist = document.getElementById('numShortlist').value;
+            formData.append('jobDesc', jobDesc);
+            formData.append('numShortlist', numShortlist);
+
+            fetch('/compare', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('result').innerHTML = `<p style="color: red;">${data.error}</p>`;
+                } else {
+                    let resultHTML = '<h3>Ranked Results</h3><ul>';
+                    data.scores.forEach(item => {
+                        resultHTML += `<li>${item.filename}: ${item.score.toFixed(4)}</li>`;
+                    });
+                    resultHTML += '</ul>';
+                    document.getElementById('result').innerHTML = resultHTML;
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `<p style="color: red;">Error processing your request.</p>`;
+                console.error('Error:', error);
+            });
+        };
+    </script>
+</body>
+</html>
