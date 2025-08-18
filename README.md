@@ -46,7 +46,7 @@ An **AI-based Applicant Tracking System (ATS)** built with **Streamlit**, **PyMu
 git clone https://github.com/<your-username>/ai-ats.git
 cd ai-ats
 ```
-###2. Create Virtual Environment (Optional but Recommended)
+2. Create Virtual Environment (Optional but Recommended)
 ```bash
 python -m venv venv
 source venv/bin/activate   # On Linux/Mac
